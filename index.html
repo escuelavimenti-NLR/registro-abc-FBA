@@ -194,15 +194,16 @@ hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
       <div class="field" style="margin-top:10px;margin-bottom:0">
         <label>Lugar</label>
         <div class="chips" id="g-lugar">
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Salón</button>
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Comedor</button>
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Patio / Recreo</button>
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Pasillo</button>
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Baño</button>
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Ed. Física</button>
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Biblioteca</button>
-          <button class="chip" onclick="toggleChip(this,'lugar',false)">Otro</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Salón</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Comedor</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Patio / Recreo</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Pasillo</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Baño</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Ed. Física</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Biblioteca</button>
+          <button class="chip" onclick="toggleChip(this,'lugar',false);toggleLugarOtro(this)">Otro</button>
         </div>
+        <input type="text" id="inp-lugar-otro" placeholder="Especifica el lugar…" style="display:none;margin-top:8px">
       </div>
     </div>
   </div>
@@ -229,7 +230,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
         <button class="vbtn" id="vbtn-ant" onclick="doVoice('ta-ant','vbtn-ant','warn-ant')"><span class="vdot"></span><span id="vlbl-ant">Dictar</span></button>
         <span style="font-size:11px;color:var(--text3)">o escribe:</span>
       </div>
-      <textarea id="ta-ant" rows="2" placeholder="Ej: El maestro pidió guardar el material. El estudiante empujó la silla y tiró el cuaderno." style="margin-top:6px" oninput="checkSubj(this,'warn-ant')"></textarea>
+      <textarea id="ta-ant" rows="2" placeholder="Ej: El maestro pidió al grupo que guardara el material y regresara a su asiento." style="margin-top:6px" oninput="checkSubj(this,'warn-ant')"></textarea>
       <div class="tip">💡 Describe lo que <strong>ves y escuchas</strong>. Evita interpretar lo que el estudiante siente o piensa.</div>
       <div class="warn" id="warn-ant"><div id="warn-ant-msg"></div><div class="sug-row" id="warn-ant-sug"></div></div>
     </div>
@@ -459,6 +460,22 @@ function toggleChip(el, group, multi){
   }
   el.classList.toggle('sel');
 }
+function toggleLugarOtro(el){
+  var otroBtn = Array.from(document.querySelectorAll('#g-lugar .chip')).find(function(c){return c.textContent.trim()==='Otro';});
+  var isOtroSel = otroBtn && otroBtn.classList.contains('sel');
+  var input = document.getElementById('inp-lugar-otro');
+  input.style.display = isOtroSel ? 'block' : 'none';
+  if(!isOtroSel) input.value = '';
+}
+function getLugar(){
+  var chips = Array.from(document.querySelectorAll('#g-lugar .chip.sel')).map(function(c){return c.textContent.trim();});
+  var i = chips.indexOf('Otro');
+  if(i !== -1){
+    var otro = (document.getElementById('inp-lugar-otro').value || '').trim();
+    chips[i] = otro ? ('Otro: ' + otro) : 'Otro';
+  }
+  return chips.join(', ');
+}
 function getChips(gid){
   return Array.from(document.querySelectorAll('#g-'+gid+' .chip.sel')).map(function(c){return c.textContent.trim();}).join(', ');
 }
@@ -593,7 +610,7 @@ function guardar(){
     observador: obs, rol: rol, estudiante: student, grado: grado,
     fecha: document.getElementById('inp-fecha').value,
     hora: document.getElementById('inp-hora').value,
-    lugar: getChips('lugar'),
+    lugar: getLugar(),
     ant_chips: getChips('ant'), ant_libre: document.getElementById('ta-ant').value.trim(),
     cond_cat: getChips('cat'), cond_libre: conducta,
     intensidad: curIntensity, duracion: getChips('dur'),
@@ -616,6 +633,8 @@ function guardar(){
 function resetFormKeepObserver(){
   ['ta-ant','ta-con','ta-cs','ta-notas'].forEach(function(id){ document.getElementById(id).value=''; });
   document.querySelectorAll('#sec-reg .chip.sel').forEach(function(c){ c.classList.remove('sel'); });
+  document.getElementById('inp-lugar-otro').value='';
+  document.getElementById('inp-lugar-otro').style.display='none';
   curIntensity=0;
   [1,2,3].forEach(function(i){ document.getElementById('ibtn-'+i).className='ibtn'; });
   ['warn-ant','warn-con','warn-cs'].forEach(function(id){ document.getElementById(id).classList.remove('on'); });
