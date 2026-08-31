@@ -447,7 +447,7 @@ function showTab(t){
     document.getElementById('sec-'+x).classList.toggle('on', x===t);
     document.getElementById('tab-'+x).classList.toggle('on', x===t);
   });
-  if(t==='hist') renderHist();
+  if(t==='hist') loadMyRecords();
 }
 
 /* ─── CHIPS / INTENSITY ─── */
@@ -642,7 +642,7 @@ function resetFormKeepObserver(){
 
 /* ─── MIS REGISTROS ─── */
 function loadMyRecords(){
-  var obs = (localStorage.getItem('abc_obs_name') || document.getElementById('inp-obs').value || '').trim().replace(/\s+/g,' ');
+  var obs = (document.getElementById('inp-obs').value || localStorage.getItem('abc_obs_name') || '').trim().replace(/\s+/g,' ');
   var dbg = document.getElementById('debug-obs');
   if(dbg) dbg.textContent = obs ? ('Buscando registros de: "'+obs+'"') : 'Aún no has escrito tu nombre.';
   if(!sb || !obs){ myRecords=[]; renderHist(); return; }
