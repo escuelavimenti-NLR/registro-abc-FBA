@@ -155,13 +155,9 @@ hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
             <option>Maestro/a regular</option>
             <option>Maestro/a de educación especial</option>
             <option>Asistente de maestro</option>
-            <option>Maestro/a principal</option>
-            <option>Director/a</option>
-            <option>Maestro/a de educación física</option>
-            <option>Maestro/a de arte</option>
             <option>Consejero/a</option>
             <option>Psicólogo/a</option>
-            <option>Trabajador/a social</option>
+            <option>Manejador/a de caso</option>
             <option>Otro</option>
           </select>
         </div>
@@ -319,7 +315,8 @@ hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
 
 <!-- ═══════════ MIS REGISTROS ═══════════ -->
 <div class="sec" id="sec-hist">
-  <p style="font-size:12px;color:var(--text3);margin:4px 0 12px">Solo ves los registros hechos con tu nombre en este dispositivo.</p>
+  <p style="font-size:12px;color:var(--text3);margin:4px 0 4px">Solo ves los registros hechos con tu nombre.</p>
+  <p style="font-size:11px;color:var(--text3);margin:0 0 12px" id="debug-obs"></p>
   <div id="hist-list"><div class="empty">Cargando…</div></div>
 </div>
 
@@ -592,7 +589,7 @@ function guardar(){
   var err=document.getElementById('errmsg'), ok=document.getElementById('okmsg');
   err.style.display='none'; ok.style.display='none';
   if(!sb){ err.textContent='La app no está conectada a Supabase todavía (falta configurar URL y KEY).'; err.style.display='block'; return; }
-  var obs = document.getElementById('inp-obs').value.trim();
+  var obs = document.getElementById('inp-obs').value.trim().replace(/\s+/g,' ');
   var rol = document.getElementById('sel-rol').value;
   if(rol==='Otro') rol = 'Otro: '+(document.getElementById('inp-rol-otro').value.trim()||'—');
   var grado = document.getElementById('sel-grado').value;
@@ -645,12 +642,19 @@ function resetFormKeepObserver(){
 
 /* ─── MIS REGISTROS ─── */
 function loadMyRecords(){
-  var obs = localStorage.getItem('abc_obs_name') || document.getElementById('inp-obs').value.trim();
+  var obs = (localStorage.getItem('abc_obs_name') || document.getElementById('inp-obs').value || '').trim().replace(/\s+/g,' ');
+  var dbg = document.getElementById('debug-obs');
+  if(dbg) dbg.textContent = obs ? ('Buscando registros de: "'+obs+'"') : 'Aún no has escrito tu nombre.';
   if(!sb || !obs){ myRecords=[]; renderHist(); return; }
-  sb.from('observaciones').select('*').eq('observador', obs).order('created_at',{ascending:false}).then(function(res){
-    if(res.error){ console.error(res.error); return; }
+  sb.from('observaciones').select('*').ilike('observador', obs).order('created_at',{ascending:false}).then(function(res){
+    if(res.error){
+      if(dbg) dbg.textContent = 'Error al buscar: '+res.error.message;
+      console.error(res.error);
+      return;
+    }
     myRecords = res.data || [];
     document.getElementById('nbadge').textContent = myRecords.length;
+    if(dbg) dbg.textContent = 'Buscando registros de: "'+obs+'" ('+myRecords.length+' encontrados)';
     renderHist();
   });
 }
