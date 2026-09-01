@@ -676,9 +676,9 @@ function recCardHTML(r, withCheckbox){
       (r.intensidad?'<span class="ibadge" style="'+intStyle(r.intensidad)+'">'+intMap[r.intensidad]+'</span>':'')+
       (r.duracion?'<span class="ibadge" style="background:var(--bg2);color:var(--text2)">'+r.duracion+'</span>':'')+'</div>'+
     '<div class="rec-cols">'+
-      '<div class="rc"><div class="rc-lbl">Antecedente</div><div class="rc-val">'+trunc(ant,120)+'</div></div>'+
-      '<div class="rc"><div class="rc-lbl">Conducta</div><div class="rc-val">'+trunc(con,120)+'</div></div>'+
-      '<div class="rc"><div class="rc-lbl">Consecuencia</div><div class="rc-val">'+trunc(cons,120)+'</div></div>'+
+      '<div class="rc"><div class="rc-lbl">Antecedente</div><div class="rc-val">'+ant+'</div></div>'+
+      '<div class="rc"><div class="rc-lbl">Conducta</div><div class="rc-val">'+con+'</div></div>'+
+      '<div class="rc"><div class="rc-lbl">Consecuencia</div><div class="rc-val">'+cons+'</div></div>'+
     '</div>'+
     (r.notas?'<div style="margin-top:6px;font-size:11px;color:var(--text3)">Nota: '+r.notas+'</div>':'')+
     '</div></div></div>';
@@ -789,7 +789,21 @@ function exportPDFAdmin(){
     var ant=[r.ant_chips,r.ant_libre].filter(Boolean).join(' | ')||'—';
     var con=[r.cond_cat,r.cond_libre].filter(Boolean).join(': ')||'—';
     var cons=[r.cons_chips,r.cons_libre].filter(Boolean).join(' | ')||'—';
-    var needH=52+(r.notas?7:0);
+
+    // Medir cuántas líneas necesita cada columna ANTES de dibujar, para que nada se corte
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    var antLines = doc.splitTextToSize(ant, CW-4);
+    var conLines = doc.splitTextToSize(con, CW-4);
+    var consLines = doc.splitTextToSize(cons, CW-4);
+    var maxLines = Math.max(antLines.length, conLines.length, consLines.length, 1);
+    var colBlockH = maxLines*4.2 + 3;
+
+    var notaLines = r.notas ? doc.splitTextToSize('Nota: '+r.notas, PW-M*2-6) : [];
+    var notaH = notaLines.length ? notaLines.length*3.6 + 4 : 0;
+
+    var needH = 24 + colBlockH + notaH;
+
+    // Si la tarjeta no cabe entera en lo que queda de página, empieza en página nueva
     if(y+needH>PH-20){ doc.addPage(); header(); y=26; }
 
     doc.setFillColor(242,241,238); doc.setDrawColor(216,214,206); doc.setLineWidth(0.3);
@@ -822,14 +836,17 @@ function exportPDFAdmin(){
       doc.text(h[0],h[1],cy);
     });
     doc.setTextColor(44,44,42); doc.setFontSize(8); doc.setFont('helvetica','normal');
-    [ant,con,cons].forEach(function(txt,i){
+    [antLines,conLines,consLines].forEach(function(lines,i){
       var cx=M+3+i*(CW+2);
-      doc.splitTextToSize(txt,CW-4).slice(0,5).forEach(function(line,j){ doc.text(line,cx,cy+4.5+j*4.2); });
+      lines.forEach(function(line,j){ doc.text(line,cx,cy+4.5+j*4.2); });
     });
-    if(r.notas){
+
+    if(notaLines.length){
+      var ny = cy + colBlockH + 1;
       doc.setTextColor(136,135,128); doc.setFontSize(7); doc.setFont('helvetica','italic');
-      doc.text('Nota: '+trunc(r.notas,110),M+3,y+needH-3);
+      notaLines.forEach(function(line,j){ doc.text(line, M+3, ny+j*3.6); });
     }
+
     y+=needH+4;
   });
 
