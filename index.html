@@ -331,6 +331,10 @@ hr.div{border:none;border-top:1px solid var(--border);margin:10px 0}
   </div>
 
   <div id="admin-panel" style="display:none">
+    <div id="adm-new" style="display:none;margin:0 0 12px;padding:12px 14px;border-radius:12px;background:#FFF3E8;border:1px solid #F5B27A;color:#7A3E0A;font-size:14px;font-weight:600;align-items:center;justify-content:space-between;gap:10px">
+      <span id="adm-new-txt"></span>
+      <button type="button" onclick="admMarkSeen()" style="border:0;background:#E8731A;color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">Marcar como vistos</button>
+    </div>
     <div class="stat-row">
       <div class="stat"><div class="stat-n" id="st-total">0</div><div class="stat-l">Registros</div></div>
       <div class="stat"><div class="stat-n" id="st-students">0</div><div class="stat-l">Estudiantes</div></div>
@@ -745,7 +749,24 @@ function loadAllRecords(){
     fs.innerHTML='<option value="">Todos los estudiantes</option>'+Object.keys(studs).sort().map(function(s){return '<option'+(cs===s?' selected':'')+'>'+s+'</option>';}).join('');
     fo.innerHTML='<option value="">Todos los observadores</option>'+Object.keys(obs).sort().map(function(s){return '<option'+(co===s?' selected':'')+'>'+s+'</option>';}).join('');
     renderAdmin();
+    admCheckNew();
   });
+}
+
+function admCheckNew(){
+  var last=null; try{ last=localStorage.getItem('abc_admin_lastseen'); }catch(e){}
+  var box=document.getElementById('adm-new');
+  if(!allRecords.length){ box.style.display='none'; return; }
+  if(!last){ try{ localStorage.setItem('abc_admin_lastseen', allRecords[0].created_at); }catch(e){} box.style.display='none'; return; }
+  var n=allRecords.filter(function(r){ return r.created_at > last; }).length;
+  if(n>0){
+    document.getElementById('adm-new-txt').textContent = n + (n===1 ? ' registro nuevo' : ' registros nuevos') + ' desde tu última visita';
+    box.style.display='flex';
+  } else { box.style.display='none'; }
+}
+function admMarkSeen(){
+  if(allRecords.length){ try{ localStorage.setItem('abc_admin_lastseen', allRecords[0].created_at); }catch(e){} }
+  document.getElementById('adm-new').style.display='none';
 }
 
 function admFiltered(){
